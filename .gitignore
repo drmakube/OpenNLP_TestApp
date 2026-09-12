@@ -1,0 +1,11 @@
+# Java build output
+/bin/
+/target/
+*.class
+
+# Maven
+dependency-reduced-pom.xml
+
+# OS/editor temporary files
+.DS_Store
+Thumbs.db

@@ -16,20 +16,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
-
-import org.apache.log4j.Logger;
-
-import opennlp.tools.stemmer.PorterStemmer;
-
 import opennlp.tools.langdetect.Language;
 import opennlp.tools.langdetect.LanguageDetector;
 import opennlp.tools.langdetect.LanguageDetectorME;
 import opennlp.tools.langdetect.LanguageDetectorModel;
-import opennlp.tools.lemmatizer.DictionaryLemmatizer;
-import opennlp.tools.lemmatizer.LemmatizerME;
-import opennlp.tools.lemmatizer.LemmatizerModel;
 import opennlp.tools.postag.POSModel;
 import opennlp.tools.postag.POSTaggerME;
 import opennlp.tools.sentdetect.SentenceDetectorME;
@@ -44,10 +34,6 @@ import opennlp.tools.util.model.BaseModel;
 
 public class TextProcessor{
 	
-	private final static Logger LOGGER = Logger.getLogger(TextProcessor.class.getName());
-	
-	
-
 	/** constant for german language */
 	private final static String de_lang = "deu";
 	/** constant for english language */
@@ -60,9 +46,6 @@ public class TextProcessor{
 	
 	/** constant for sentence extraction model */
 	private final static String sentence = "sent";
-	
-	/** constant for lemmatization model */
-	private final static String lemma = "lemma";
 	
 	
 	
@@ -129,7 +112,7 @@ public class TextProcessor{
 			result =  br.lines().collect(Collectors.toList());
 
 		} catch (IOException e) {
-			LOGGER.error("Error reading stopwqords");
+			System.err.println("Error reading stopwords");
 		}
 		return result;
 		
@@ -191,10 +174,7 @@ public class TextProcessor{
 				String[] sentences = extractSentences(language, content);
 				
 				ClassLoader classLoader = this.getClass().getClassLoader();
-				InputStream dictLemmatizer = new FileInputStream(classLoader.getResource("models/" + en_lang + "/"+lemma+".bin").getFile()); 
 				
-				DictionaryLemmatizer lemmatizer = new DictionaryLemmatizer(dictLemmatizer);
-				//Stemmer stemmer = new PorterStemmer();
 				Stemmer stemmer = new SnowballStemmer(ALGORITHM.ENGLISH);
 				
 				for (String sentence : sentences) {
@@ -205,29 +185,22 @@ public class TextProcessor{
 
 					String[] tags = tag(language, words);					
 					String[] toks = tok(words);
-
-					String[] lemma = lemmatizer.lemmatize(toks, tags); 
-										
 					
-					for (int i= 0; i<toks.length; i++) {
-								
-						System.out.println("Token: "+toks[i] +  " Lemma: " +lemma[i] + " Stem: " +stemmer.stem(toks[i]).toString());
+					for (int i = 0; i < toks.length; i++) {
 
-						if (!stopwords.get(language).contains(toks[i].toLowerCase())  && !stopwords.get(language).contains(lemma[i])    ) {
-							Word w = new Word();				
-							w.setTag(tags[i]);
-							if (lemma[i].equals("O")) {
-								w.setStemmedWord(toks[i]); 
-							} else
-							w.setStemmedWord(lemma[i]);
-							
-							//w.setStemmedWord(stemmer.stem(toks[i]).toString());
-							
-							s.getWords().add(w);
-						}
-						
+					    String stem = stemmer.stem(toks[i]).toString();
 
-						
+					    System.out.println("Token: " + toks[i] + " Stem: " + stem);
+
+					    if (!stopwords.get(language).contains(toks[i].toLowerCase())
+					            && !stopwords.get(language).contains(stem.toLowerCase())) {
+
+					        Word w = new Word();
+					        w.setTag(tags[i]);
+					        w.setStemmedWord(stem);
+
+					        s.getWords().add(w);
+					    }
 					}
 					
 					
